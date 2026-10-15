@@ -9,6 +9,13 @@ two terminals, no browser tab in the middle.
 This is the setup, the tool schemas **read from a live server** rather than copied from docs, and the
 gotchas that will otherwise cost you an afternoon.
 
+> **Want slash commands instead?** OpenAI ships an official Claude Code plugin,
+> [openai/codex-plugin-cc](https://github.com/openai/codex-plugin-cc): `/codex:review`, `/codex:rescue`,
+> background jobs, set up from inside Claude Code. If that is what you are after, use it. This repo is for the
+> other route: Codex's own built-in MCP server, called as a tool, with every parameter in your hands
+> (`developer-instructions`, `sandbox`, `approval-policy`, `model`, `config`) and a verifier you can run in CI.
+> [Which one fits](#which-route-fits) compares the three common options.
+
 ```mermaid
 flowchart LR
     You([You]) --> CC[Claude Code<br/>controller]
@@ -33,7 +40,7 @@ throw away.
 ```bash
 # 1. Codex CLI, current
 npm install -g @openai/codex@latest
-codex --version                    # expect 0.146.0 or newer
+codex --version                    # expect 0.147.0 or newer
 
 # 2. Authenticate — installing the CLI does not log you in
 codex login                        # or set OPENAI_API_KEY
@@ -68,7 +75,7 @@ python3 scripts/verify-codex-mcp.py
 ```
 
 ```text
-server:   codex-mcp-server 0.146.0
+server:   codex-mcp-server 0.147.0
 protocol: 2025-03-26 (requested 2025-03-26)
 
 tool: codex
@@ -109,7 +116,7 @@ Two tools. `codex` opens a session; `codex-reply` continues one.
 | `threadId` | string | `codex-reply` only — continue a session with its context intact. |
 | `conversationId` | string | `codex-reply` only — the older name, still accepted. Prefer `threadId`. |
 
-Read from `codex-mcp-server 0.146.0` over MCP `2025-03-26`. Newer builds may add fields — the verify
+Read from `codex-mcp-server 0.147.0` over MCP `2025-03-26` (unchanged since 0.146.0). Newer builds may add fields — the verify
 script prints yours.
 
 ---
@@ -254,11 +261,23 @@ of integration — useful, but do not expect symmetry.
 
 ---
 
+## Which route fits
+
+| | [openai/codex-plugin-cc](https://github.com/openai/codex-plugin-cc) | [tuannvm/codex-mcp-server](https://github.com/tuannvm/codex-mcp-server) | This guide |
+| --- | --- | --- | --- |
+| What it is | Official Claude Code plugin | MCP server wrapping the Codex CLI, from npm | Codex's own `codex mcp-server`, no extra package |
+| Install | `/plugin marketplace add openai/codex-plugin-cc`, then `/plugin install codex@openai-codex` | `claude mcp add codex-cli -- npx -y codex-mcp-server` | `claude mcp add codex -- codex mcp-server` |
+| How you use it | Slash commands: `/codex:review`, `/codex:adversarial-review`, `/codex:rescue`, `/codex:status`, `/codex:result`, `/codex:cancel` | Tools: `codex` (named sessions), `review`, `websearch`, `listSessions` | Tools: `codex` and `codex-reply`, with the full parameter set below |
+| Background jobs | Yes (`--background`, `/codex:status`) | Not described | No: each call returns when the session does |
+| Good fit when | You want reviews and handoffs with no setup | You want the MCP route in VS Code or Cursor too, with one-click installs | You want to scope each call yourself (`developer-instructions`, `sandbox`, `approval-policy`) and check the server in CI |
+
+Read from each project's README on 2026-10-15. If one of them has moved on, an issue with a link is welcome.
+
 ## Compatibility
 
 | | |
 | --- | --- |
-| Codex CLI | 0.146.0 (schemas read from this build) |
+| Codex CLI | 0.147.0 (schemas read from this build; 0.146.0 gave the same tools and parameters) |
 | MCP protocol | 2025-03-26 |
 | Verified on | macOS 15 (x86_64), Node 24 |
 
